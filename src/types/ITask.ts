@@ -1,10 +1,13 @@
 import type { TaskCategory } from "./TaskCategory";
 
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskFilter = "all" | "completed" | "active";
+
 export interface ITask {
   id: string;
   title: string;
   description: string;
-  isCompleted: boolean;
-  priority: "Low" | "Medium" | "High";
+  completed: boolean;
+  priority: TaskPriority;
   category: TaskCategory;
 }
