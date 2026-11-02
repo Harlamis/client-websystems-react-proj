@@ -47,7 +47,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: ITaskItemProps) => (
       />
       <div className="min-w-0 flex-1">
         <h3
-          className={`break-words font-semibold ${
+          className={`wrap-break-word font-semibold ${
             task.completed
               ? "text-slate-500 line-through"
               : "text-slate-900"
@@ -56,7 +56,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: ITaskItemProps) => (
           {task.title}
         </h3>
         {task.description && (
-          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-600">
+          <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm text-slate-600">
             {task.description}
           </p>
         )}
