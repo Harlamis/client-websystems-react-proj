@@ -73,4 +73,13 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   const toggleTask = (id: string) => {
     dispatch({ type: "TOGGLE_TASK", payload: { id: id } });
   };
+
+  const requestDelete = (id: string) => {
+    dispatch({ type: "REQUEST_DELETE", payload: { id: id } });
+  };
+
+  const updateTask = (task: ITask) => {
+    dispatch({ type: "UPDATE_TASK", payload: task });
+    setEditingTask(null);
+  };
 };
