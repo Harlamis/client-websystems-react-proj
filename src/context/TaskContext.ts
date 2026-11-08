@@ -60,4 +60,13 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     ).length;
     document.title = `Study Planner - ${activeTasks} active tasks`;
   }, [tasks]);
+
+  const addTask = (taskData: Omit<ITask, "id" | "completed">) => {
+    const newTask: ITask = {
+      ...taskData,
+      id: crypto.randomUUID(),
+      completed: false,
+    };
+    dispatch({ type: "ADD_TASK", payload: newTask });
+  };
 };
