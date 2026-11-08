@@ -1,8 +1,4 @@
-interface ITaskStatsProps {
-  total: number;
-  completed: number;
-  active: number;
-}
+import { useTaskContext } from "../hooks/useTaskContext";
 
 const stats = [
   { label: "Усього завдань", valueKey: "total", color: "text-slate-900" },
@@ -10,14 +6,16 @@ const stats = [
   { label: "Залишилось", valueKey: "active", color: "text-indigo-700" },
 ] as const;
 
-export const TaskStats = ({ total, completed, active }: ITaskStatsProps) => {
+export const TaskStats = () => {
+  const { tasks } = useTaskContext();
+  const validTasks = tasks.filter((t) => !t.isPendingDelete);
+  const total = validTasks.length;
+  const completed = validTasks.filter((t) => t.completed).length;
+  const active = validTasks.filter((t) => !t.completed).length;
   const values = { total, completed, active };
 
   return (
-    <section
-      aria-label="Статистика завдань"
-      className="grid grid-cols-3 gap-3"
-    >
+    <section aria-label="Статистика завдань" className="grid grid-cols-3 gap-3">
       {stats.map(({ label, valueKey, color }) => (
         <div
           className="rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm sm:px-5"
