@@ -10,4 +10,5 @@ export interface ITask {
   completed: boolean;
   priority: TaskPriority;
   category: TaskCategory;
+  isPendingDelete?: boolean;
 }
