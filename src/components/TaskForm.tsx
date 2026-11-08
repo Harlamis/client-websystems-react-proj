@@ -1,42 +1,68 @@
 import { useState, type FormEvent } from "react";
 import type { ITask, TaskPriority } from "../types/ITask";
 import type { TaskCategory } from "../types/TaskCategory";
-
-interface ITaskFormProps {
-  onAddTask(task: Omit<ITask, "id">): void;
-}
+import { useTaskContext } from "../hooks/useTaskContext";
 
 const fieldClassName =
   "mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 
-export const TaskForm = ({ onAddTask }: ITaskFormProps) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<TaskCategory>("Study");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
+interface ITaskFormFieldsProps {
+  editingTask: ITask | null;
+  onAddTask: (task: Omit<ITask, "id" | "completed">) => void;
+  onUpdateTask: (task: ITask) => void;
+  onCancelEdit: () => void;
+}
+
+const TaskFormFields = ({
+  editingTask,
+  onAddTask,
+  onUpdateTask,
+  onCancelEdit,
+}: ITaskFormFieldsProps) => {
+  const [title, setTitle] = useState(editingTask?.title ?? "");
+  const [description, setDescription] = useState(
+    editingTask?.description ?? "",
+  );
+  const [category, setCategory] = useState<TaskCategory>(
+    editingTask?.category ?? "Study",
+  );
+  const [priority, setPriority] = useState<TaskPriority>(
+    editingTask?.priority ?? "medium",
+  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
-
-    onAddTask({
-      title: trimmedTitle,
-      description: description.trim(),
-      category,
-      priority,
-      completed: false,
-    });
-    setTitle("");
-    setDescription("");
-    setCategory("Study");
-    setPriority("medium");
+    if (editingTask !== null) {
+      onUpdateTask({
+        ...editingTask,
+        title: trimmedTitle,
+        description: description.trim(),
+        category,
+        priority,
+        completed: false,
+      });
+    } else {
+      onAddTask({
+        title: trimmedTitle,
+        description: description.trim(),
+        category,
+        priority,
+      });
+      setTitle("");
+      setDescription("");
+      setCategory("Study");
+      setPriority("medium");
+    }
   };
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-lg font-bold text-slate-900">
-        Додати навчальне завдання
+        {editingTask
+          ? "Редагувати навчальне завдання"
+          : "Додати навчальне завдання"}
       </h2>
       <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
         <div>
@@ -120,13 +146,37 @@ export const TaskForm = ({ onAddTask }: ITaskFormProps) => {
             </select>
           </div>
         </div>
-        <button
-          className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:w-auto"
-          type="submit"
-        >
-          Додати завдання
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:w-auto"
+            type="submit"
+          >
+            {editingTask ? "Зберегти зміни" : "Додати завдання"}
+          </button>
+          {editingTask && (
+            <button
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:w-auto"
+              onClick={onCancelEdit}
+              type="button"
+            >
+              Скасувати
+            </button>
+          )}
+        </div>
       </form>
     </section>
+  );
+};
+
+export const TaskForm = () => {
+  const { addTask, updateTask, editingTask, setEditingTask } = useTaskContext();
+  return (
+    <TaskFormFields
+      key={editingTask?.id ?? "new-task"}
+      editingTask={editingTask}
+      onAddTask={addTask}
+      onUpdateTask={updateTask}
+      onCancelEdit={() => setEditingTask(null)}
+    />
   );
 };
