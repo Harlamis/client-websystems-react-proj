@@ -82,4 +82,9 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: "UPDATE_TASK", payload: task });
     setEditingTask(null);
   };
+
+  const undoDelete = (id: string) => {
+    dispatch({ type: "UNDO_DELETE", payload: { id: id } });
+  };
+  
 };
