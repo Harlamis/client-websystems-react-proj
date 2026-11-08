@@ -91,4 +91,7 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: "REQUEST_CLEAR_COMPLETED" });
   };
 
+  const undoClearCompleted = () => {
+    dispatch({ type: "UNDO_CLEAR_COMPLETED" });
+  };
 };
