@@ -86,5 +86,9 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   const undoDelete = (id: string) => {
     dispatch({ type: "UNDO_DELETE", payload: { id: id } });
   };
-  
+
+  const requestClearCompleted = () => {
+    dispatch({ type: "REQUEST_CLEAR_COMPLETED" });
+  };
+
 };
