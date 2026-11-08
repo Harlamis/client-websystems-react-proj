@@ -94,4 +94,9 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   const undoClearCompleted = () => {
     dispatch({ type: "UNDO_CLEAR_COMPLETED" });
   };
+
+  const resetTasks = () => {
+    dispatch({ type: "RESET_TASKS", payload: initialTasks });
+  };
+
 };
