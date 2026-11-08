@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useReducer,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import { TaskContext } from "./TaskContext";
 import type { ITask, TaskFilter } from "../types/ITask";
 import { taskReducer } from "../reducers/taskReducer";
@@ -27,6 +22,8 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     "all",
   );
   const [editingTask, setEditingTask] = useState<ITask | null>(null);
+  const deleteTimersRef = useRef<Record<string, number>>({});
+  const clearCompletedTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -57,7 +54,13 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const requestDelete = (id: string) => {
+    window.clearTimeout(deleteTimersRef.current[id]);
     dispatch({ type: "REQUEST_DELETE", payload: { id: id } });
+    const timerId = window.setTimeout(() => {
+      dispatch({ type: "CONFIRM_DELETE", payload: { id: id } });
+      delete deleteTimersRef.current[id];
+    }, 5000);
+    deleteTimersRef.current[id] = timerId;
   };
 
   const updateTask = (task: ITask) => {
@@ -66,14 +69,27 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const undoDelete = (id: string) => {
+    window.clearTimeout(deleteTimersRef.current[id]);
+    delete deleteTimersRef.current[id];
     dispatch({ type: "UNDO_DELETE", payload: { id: id } });
   };
 
   const requestClearCompleted = () => {
+    if (clearCompletedTimerRef.current) {
+      window.clearTimeout(clearCompletedTimerRef.current);
+    }
     dispatch({ type: "REQUEST_CLEAR_COMPLETED" });
+    clearCompletedTimerRef.current = window.setTimeout(() => {
+      dispatch({ type: "CONFIRM_CLEAR_COMPLETED" });
+      clearCompletedTimerRef.current = null;
+    }, 5000);
   };
 
   const undoClearCompleted = () => {
+    if (clearCompletedTimerRef.current) {
+      window.clearTimeout(clearCompletedTimerRef.current);
+      clearCompletedTimerRef.current = null;
+    }
     dispatch({ type: "UNDO_CLEAR_COMPLETED" });
   };
 
