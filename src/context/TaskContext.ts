@@ -69,4 +69,8 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     };
     dispatch({ type: "ADD_TASK", payload: newTask });
   };
+
+  const toggleTask = (id: string) => {
+    dispatch({ type: "TOGGLE_TASK", payload: { id: id } });
+  };
 };
