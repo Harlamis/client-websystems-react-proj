@@ -1,10 +1,5 @@
-import type { ITask, TaskFilter } from "../types/ITask";
-
-interface ITaskFiltersProps {
-  activeFilter: TaskFilter;
-  onFilterChange(filter: TaskFilter): void;
-  tasks: ITask[];
-}
+import { useTaskContext } from "../hooks/useTaskContext";
+import type { TaskFilter } from "../types/ITask";
 
 const filters: { value: TaskFilter; label: string }[] = [
   { value: "all", label: "Всі" },
@@ -12,16 +7,17 @@ const filters: { value: TaskFilter; label: string }[] = [
   { value: "completed", label: "Виконані" },
 ];
 
-export const TaskFilters = ({
-  activeFilter,
-  onFilterChange,
-  tasks,
-}: ITaskFiltersProps) => {
+export const TaskFilters = () => {
+  const { currentFilter, setCurrentFilter, requestClearCompleted, tasks } =
+    useTaskContext();
   const counts: Record<TaskFilter, number> = {
     all: tasks.length,
     completed: tasks.filter((task) => task.completed).length,
     active: tasks.filter((task) => !task.completed).length,
   };
+  const completedTaskCount = tasks.filter(
+    (task) => task.completed && !task.isPendingDelete,
+  ).length;
 
   return (
     <div
@@ -31,22 +27,35 @@ export const TaskFilters = ({
     >
       {filters.map(({ value, label }) => (
         <button
-          aria-pressed={activeFilter === value}
+          aria-pressed={currentFilter === value}
           className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
-            activeFilter === value
+            currentFilter === value
               ? "bg-indigo-600 text-white"
-              : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50"
+              : "bg-white text-slate-600 ring-1 ring-slate-200 ring-inset hover:bg-slate-50"
           }`}
           key={value}
-          onClick={() => onFilterChange(value)}
+          onClick={() => setCurrentFilter(value)}
           type="button"
         >
           {label}{" "}
-          <span className={activeFilter === value ? "text-indigo-100" : "text-slate-400"}>
+          <span
+            className={
+              currentFilter === value ? "text-indigo-100" : "text-slate-400"
+            }
+          >
             {counts[value]}
           </span>
         </button>
       ))}
+      {completedTaskCount > 0 && (
+        <button
+          className="rounded-full px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-200 transition ring-inset hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600"
+          onClick={requestClearCompleted}
+          type="button"
+        >
+          Очистити виконані
+        </button>
+      )}
     </div>
   );
 };

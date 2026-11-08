@@ -43,7 +43,7 @@ function App() {
       <div className="mx-auto max-w-3xl">
         <Header />
         <div className="mt-8 space-y-6">
-          <TaskForm onAddTask={addTask} />
+          <TaskForm />
           <TaskStats
             total={tasks.length}
             completed={completedCount}
@@ -52,18 +52,9 @@ function App() {
           <section aria-label="Навчальні завдання">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-slate-900">Мої завдання</h2>
-              <TaskFilters
-                activeFilter={filter}
-                onFilterChange={setFilter}
-                tasks={tasks}
-              />
+              <TaskFilters />
             </div>
-            <TaskList
-              tasks={visibleTasks}
-              totalTaskCount={tasks.length}
-              onToggleTask={toggleTask}
-              onDeleteTask={deleteTask}
-            />
+            <TaskList />
           </section>
         </div>
       </div>
