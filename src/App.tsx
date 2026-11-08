@@ -6,6 +6,7 @@ import { TaskList } from "./components/TaskList";
 import { TaskStats } from "./components/TaskStats";
 import { initialTasks } from "./data/initialTasks";
 import type { ITask, TaskFilter } from "./types/ITask";
+import { Toast } from "./components/Toast";
 
 function App() {
   const [tasks, setTasks] = useState<ITask[]>(initialTasks);
@@ -34,9 +35,7 @@ function App() {
   };
 
   const deleteTask = (id: string) => {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task.id !== id),
-    );
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
   };
 
   return (
@@ -52,9 +51,7 @@ function App() {
           />
           <section aria-label="Навчальні завдання">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-bold text-slate-900">
-                Мої завдання
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Мої завдання</h2>
               <TaskFilters
                 activeFilter={filter}
                 onFilterChange={setFilter}
@@ -70,6 +67,7 @@ function App() {
           </section>
         </div>
       </div>
+      <Toast />
     </main>
   );
 }
