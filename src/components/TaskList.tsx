@@ -1,20 +1,21 @@
-import type { ITask } from "../types/ITask";
+import { useTaskContext } from "../hooks/useTaskContext";
 import { TaskItem } from "./TaskItem";
 
-export interface ITaskListProps {
-  tasks: ITask[];
-  totalTaskCount: number;
-  onToggleTask(id: string): void;
-  onDeleteTask(id: string): void;
-}
-
-export const TaskList = ({
-  tasks,
-  totalTaskCount,
-  onToggleTask,
-  onDeleteTask,
-}: ITaskListProps) => {
-  if (tasks.length === 0) {
+export const TaskList = () => {
+  const { tasks, currentFilter } = useTaskContext();
+  let filteredTasks;
+  switch (currentFilter) {
+    case "active":
+      filteredTasks = tasks.filter((t) => !t.completed);
+      break;
+    case "completed":
+      filteredTasks = tasks.filter((t) => t.completed);
+      break;
+    default:
+      filteredTasks = tasks;
+  }
+  const totalTaskCount = tasks.length;
+  if (filteredTasks.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
         <p className="text-lg font-semibold text-slate-800">
@@ -33,13 +34,8 @@ export const TaskList = ({
 
   return (
     <ul className="space-y-3">
-      {tasks.map((task) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          onToggle={() => onToggleTask(task.id)}
-          onDelete={() => onDeleteTask(task.id)}
-        />
+      {filteredTasks.map((task) => (
+        <TaskItem key={task.id} task={task} />
       ))}
     </ul>
   );
