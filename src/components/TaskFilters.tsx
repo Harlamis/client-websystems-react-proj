@@ -1,5 +1,4 @@
-import { useTaskContext } from "../hooks/useTaskContext";
-import type { TaskFilter } from "../types/ITask";
+import type { ITask, TaskFilter } from "../types/ITask";
 
 const filters: { value: TaskFilter; label: string }[] = [
   { value: "all", label: "Всі" },
@@ -7,9 +6,19 @@ const filters: { value: TaskFilter; label: string }[] = [
   { value: "completed", label: "Виконані" },
 ];
 
-export const TaskFilters = () => {
-  const { currentFilter, setCurrentFilter, requestClearCompleted, tasks } =
-    useTaskContext();
+interface TaskFiltersProps {
+  currentFilter: TaskFilter;
+  tasks: ITask[];
+  onChangeFilter: (filter: TaskFilter) => void;
+  onClearCompleted: () => void;
+}
+
+export const TaskFilters = ({
+  currentFilter,
+  tasks,
+  onChangeFilter,
+  onClearCompleted,
+}: TaskFiltersProps) => {
   const counts: Record<TaskFilter, number> = {
     all: tasks.length,
     completed: tasks.filter((task) => task.completed).length,
@@ -34,7 +43,7 @@ export const TaskFilters = () => {
               : "bg-white text-slate-600 ring-1 ring-slate-200 ring-inset hover:bg-slate-50"
           }`}
           key={value}
-          onClick={() => setCurrentFilter(value)}
+          onClick={() => onChangeFilter(value)}
           type="button"
         >
           {label}{" "}
@@ -50,7 +59,7 @@ export const TaskFilters = () => {
       {completedTaskCount > 0 && (
         <button
           className="rounded-full px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-200 transition ring-inset hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600"
-          onClick={requestClearCompleted}
+          onClick={onClearCompleted}
           type="button"
         >
           Очистити виконані
