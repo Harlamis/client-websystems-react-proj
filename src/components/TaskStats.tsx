@@ -1,4 +1,4 @@
-import { useTaskContext } from "../hooks/useTaskContext";
+import type { ITask } from "../types/ITask";
 
 const stats = [
   { label: "Усього завдань", valueKey: "total", color: "text-slate-900" },
@@ -6,8 +6,7 @@ const stats = [
   { label: "Залишилось", valueKey: "active", color: "text-indigo-700" },
 ] as const;
 
-export const TaskStats = () => {
-  const { tasks } = useTaskContext();
+export const TaskStats = ({ tasks }: { tasks: ITask[] }) => {
   const validTasks = tasks.filter((t) => !t.isPendingDelete);
   const total = validTasks.length;
   const completed = validTasks.filter((t) => t.completed).length;
