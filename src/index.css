@@ -23,3 +23,9 @@ textarea,
 select {
   font: inherit;
 }
+
+@keyframes toast-shrink {
+  to {
+    transform: scaleX(0);
+  }
+}

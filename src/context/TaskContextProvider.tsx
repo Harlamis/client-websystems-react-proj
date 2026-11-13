@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { TaskContext } from "./TaskContext";
 import type { ITask, TaskFilter } from "../types/ITask";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import type { IToast } from "../components/Toast";
+import type { IToast, ToastType } from "../types/IToast";
 
 export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   const [currentFilter, setCurrentFilter] = useLocalStorage<TaskFilter>(
@@ -17,11 +17,11 @@ export const TaskContextProvider = ({ children }: { children: ReactNode }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const showToast = (message: string, type?: "info" | "error" | "success") => {
+  const showToast = (message: string, type: ToastType = "info") => {
     const newToast: IToast = {
       id: crypto.randomUUID(),
-      message: message,
-      type: type || "info",
+      message,
+      type,
     };
     setToasts((prev) => [newToast, ...prev]);
     setTimeout(() => hideToast(newToast.id), 5000);

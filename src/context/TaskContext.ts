@@ -1,10 +1,10 @@
 import { createContext } from "react";
 import type { ITask, TaskFilter } from "../types/ITask";
-import type { IToast } from "../components/Toast";
+import type { IToast, ToastType } from "../types/IToast";
 
 interface ITaskContextType {
   toasts: IToast[];
-  showToast: (message: string, type: "info" | "error" | "success") => void;
+  showToast: (message: string, type?: ToastType) => void;
   hideToast: (id: string) => void;
   currentFilter: TaskFilter;
   editingTask: ITask | null;
