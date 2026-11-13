@@ -8,8 +8,8 @@ const fieldClassName =
 
 interface ITaskFormFieldsProps {
   editingTask: ITask | null;
-  onAddTask: (task: Omit<ITask, "id" | "completed">) => void;
-  onUpdateTask: (task: ITask) => void;
+  onAddTask: (task: Omit<ITask, "id" | "completed">) => Promise<boolean>;
+  onUpdateTask: (task: ITask) => Promise<boolean>;
   onCancelEdit: () => void;
 }
 
@@ -30,26 +30,27 @@ const TaskFormFields = ({
     editingTask?.priority ?? "medium",
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
     if (editingTask !== null) {
-      onUpdateTask({
+      await onUpdateTask({
         ...editingTask,
         title: trimmedTitle,
         description: description.trim(),
         category,
         priority,
-        completed: false,
+        completed: editingTask.completed,
       });
     } else {
-      onAddTask({
+      const created = await onAddTask({
         title: trimmedTitle,
         description: description.trim(),
         category,
         priority,
       });
+      if (!created) return;
       setTitle("");
       setDescription("");
       setCategory("Study");
@@ -168,14 +169,19 @@ const TaskFormFields = ({
   );
 };
 
-export const TaskForm = () => {
-  const { addTask, updateTask, editingTask, setEditingTask } = useTaskContext();
+interface TaskFormProps {
+  onAddTask: (task: Omit<ITask, "id" | "completed">) => Promise<boolean>;
+  onUpdateTask: (task: ITask) => Promise<boolean>;
+}
+
+export const TaskForm = ({ onAddTask, onUpdateTask }: TaskFormProps) => {
+  const { editingTask, setEditingTask } = useTaskContext();
   return (
     <TaskFormFields
       key={editingTask?.id ?? "new-task"}
       editingTask={editingTask}
-      onAddTask={addTask}
-      onUpdateTask={updateTask}
+      onAddTask={onAddTask}
+      onUpdateTask={onUpdateTask}
       onCancelEdit={() => setEditingTask(null)}
     />
   );
