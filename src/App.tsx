@@ -1,16 +1,38 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { TaskFilters } from "./components/TaskFilters";
 import { TaskForm } from "./components/TaskForm";
 import { TaskList } from "./components/TaskList";
 import { TaskStats } from "./components/TaskStats";
 import { Toast } from "./components/Toast";
+import { Modal } from "./components/Modal";
 import { useTasks } from "./hooks/useTasks";
 import type { ITask, TaskFilter } from "./types/ITask";
 import { useTaskContext } from "./hooks/useTaskContext";
 
+type ActiveModal =
+  | { type: "details"; task: ITask }
+  | { type: "delete"; task: ITask }
+  | { type: "clear-completed"; tasks: ITask[] }
+  | null;
+
+const categoryLabels = {
+  Study: "Навчання",
+  Home: "Дім",
+  Work: "Робота",
+  Misc: "Інше",
+} as const;
+
+const priorityLabels = {
+  low: "Низький",
+  medium: "Середній",
+  high: "Високий",
+} as const;
+
 function App() {
   const pageSize = 10;
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [isModalBusy, setIsModalBusy] = useState(false);
   const {
     tasks,
     changePage,
@@ -78,31 +100,53 @@ function App() {
     }
   };
 
-  const handleDeleteTask = async (task: ITask) => {
+  const handleConfirmDelete = async () => {
+    if (activeModal?.type !== "delete") return;
+
     try {
-      const deletedTask = await deleteTask(task.id);
+      const deletedTask = await deleteTask(activeModal.task.id);
+      setActiveModal(null);
       showToast(`Завдання «${deletedTask.title}» видалено.`, "success");
     } catch (error) {
       showToast(getErrorMessage(error, "Не вдалося видалити завдання"), "error");
+    } finally {
+      setIsModalBusy(false);
     }
   };
 
-  const handleClearCompleted = async () => {
-    const completedTasks = tasks.filter((task) => task.completed);
-    if (completedTasks.length === 0) return;
+  const handleConfirmClearCompleted = async () => {
+    if (activeModal?.type !== "clear-completed") return;
 
-    try {
-      await Promise.all(completedTasks.map((task) => deleteTask(task.id)));
+    setIsModalBusy(true);
+    const tasksToDelete = activeModal.tasks;
+    const results = await Promise.allSettled(
+      tasksToDelete.map((task) => deleteTask(task.id)),
+    );
+    const deletedCount = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
+    const failedCount = results.length - deletedCount;
+    setActiveModal(null);
+    setIsModalBusy(false);
+
+    if (failedCount > 0) {
       showToast(
-        `Видалено виконаних завдань: ${completedTasks.length}.`,
-        "success",
-      );
-    } catch (error) {
-      showToast(
-        getErrorMessage(error, "Не вдалося видалити всі виконані завдання"),
+        `Видалено: ${deletedCount}. Не вдалося видалити: ${failedCount}.`,
         "error",
       );
+    } else {
+      showToast(`Видалено виконаних завдань: ${deletedCount}.`, "success");
     }
+  };
+
+  const openClearCompletedConfirmation = () => {
+    const completedTasks = tasks.filter((task) => task.completed);
+    if (completedTasks.length === 0) return;
+    setActiveModal({ type: "clear-completed", tasks: completedTasks });
+  };
+
+  const closeModal = () => {
+    if (!isModalBusy) setActiveModal(null);
   };
 
   const handleFilterChange = (filter: TaskFilter) => {
@@ -132,7 +176,7 @@ function App() {
                 tasks={tasks}
                 currentFilter={currentFilter}
                 onChangeFilter={handleFilterChange}
-                onClearCompleted={handleClearCompleted}
+                onClearCompleted={openClearCompletedConfirmation}
               />
             </div>
             {isLoading ? (
@@ -157,7 +201,8 @@ function App() {
                   currentFilter={currentFilter}
                   onToggle={handleToggleTask}
                   onEdit={setEditingTask}
-                  onDelete={handleDeleteTask}
+                  onView={(task) => setActiveModal({ type: "details", task })}
+                  onDelete={(task) => setActiveModal({ type: "delete", task })}
                 />
                 {total > pageSize && (
                   <nav
@@ -190,6 +235,122 @@ function App() {
           </section>
         </div>
       </div>
+      <Modal
+        open={activeModal !== null}
+        title={
+          activeModal?.type === "details"
+            ? activeModal.task.title
+            : activeModal?.type === "delete"
+              ? "Підтвердити видалення"
+              : "Очистити виконані завдання?"
+        }
+        onClose={closeModal}
+        actions={
+          activeModal?.type === "details" ? (
+            <>
+              <button
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={closeModal}
+                type="button"
+              >
+                Закрити
+              </button>
+              <button
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                onClick={() => {
+                  setEditingTask(activeModal.task);
+                  setActiveModal(null);
+                }}
+                type="button"
+              >
+                Редагувати
+              </button>
+            </>
+          ) : activeModal?.type === "delete" ? (
+            <>
+              <button
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                disabled={isModalBusy}
+                onClick={closeModal}
+                type="button"
+              >
+                Скасувати
+              </button>
+              <button
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                disabled={isModalBusy}
+                onClick={() => {
+                  setIsModalBusy(true);
+                  void handleConfirmDelete();
+                }}
+                type="button"
+              >
+                {isModalBusy ? "Видалення…" : "Видалити"}
+              </button>
+            </>
+          ) : activeModal?.type === "clear-completed" ? (
+            <>
+              <button
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                disabled={isModalBusy}
+                onClick={closeModal}
+                type="button"
+              >
+                Скасувати
+              </button>
+              <button
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                disabled={isModalBusy}
+                onClick={() => void handleConfirmClearCompleted()}
+                type="button"
+              >
+                Видалити {activeModal.tasks.length} завдань
+              </button>
+            </>
+          ) : null
+        }
+      >
+        {activeModal?.type === "details" ? (
+          <dl className="space-y-4 text-sm">
+            <div>
+              <dt className="font-semibold text-slate-500">Опис</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-slate-800">
+                {activeModal.task.description || "Опис відсутній"}
+              </dd>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <dt className="font-semibold text-slate-500">Категорія</dt>
+                <dd className="mt-1 text-slate-800">
+                  {categoryLabels[activeModal.task.category]}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-slate-500">Пріоритет</dt>
+                <dd className="mt-1 text-slate-800">
+                  {priorityLabels[activeModal.task.priority]}
+                </dd>
+              </div>
+            </div>
+            <div>
+              <dt className="font-semibold text-slate-500">Стан</dt>
+              <dd className="mt-1 text-slate-800">
+                {activeModal.task.completed ? "Виконано" : "До виконання"}
+              </dd>
+            </div>
+          </dl>
+        ) : activeModal?.type === "delete" ? (
+          <p className="text-sm text-slate-700">
+            Видалити завдання «{activeModal.task.title}»? Цю дію не можна
+            скасувати.
+          </p>
+        ) : activeModal?.type === "clear-completed" ? (
+          <p className="text-sm text-slate-700">
+            Буде видалено виконаних завдань: {activeModal.tasks.length}. Цю дію
+            не можна скасувати.
+          </p>
+        ) : null}
+      </Modal>
       <Toast />
     </main>
   );
