@@ -25,7 +25,7 @@ export const useTasks = (limit: number) => {
         setTotal(total);
       } catch (error) {
         if (axios.isCancel(error)) return;
-        else setError("Could not fetch tasks!");
+        else setError("Не вдалося завантажити завдання.");
       } finally {
         if (!abortController.signal.aborted) setIsLoading(false);
       }
@@ -47,29 +47,66 @@ export const useTasks = (limit: number) => {
   };
 
   const createTask = async (task: Omit<ITask, "id" | "completed">) => {
-    const createdTask = await taskRepository.create(task);
-    setTasks((prev) => [
-      { id: crypto.randomUUID(), completed: createdTask.completed, ...task },
-      ...prev,
-    ]);
-    setTotal((prev) => prev + 1);
+    try {
+      const createdTask = await taskRepository.create(task);
+      setTasks((prev) => [createdTask, ...prev]);
+      setTotal((prev) => prev + 1);
+      return createdTask;
+    } catch (error) {
+      throw new Error("Не вдалося створити завдання.", { cause: error });
+    }
   };
 
   const updateTask = async (task: Partial<ITask>, id: number | string) => {
-    if (!Number.isNaN(Number(id))) {
-      await taskRepository.update(id, task);
+    try {
+      const existingTask = tasks.find(
+        (currentTask) => String(currentTask.id) === String(id),
+      );
+      if (!existingTask) {
+        throw new Error("Task not found");
+      }
+
+      const serverTask = Number.isNaN(Number(id))
+        ? existingTask
+        : await taskRepository.update(id, task);
+      const updatedTask = {
+        ...existingTask,
+        ...task,
+        title: serverTask.title,
+        completed: serverTask.completed,
+      };
+
+      setTasks((prev) =>
+        prev.map((currentTask) =>
+          String(currentTask.id) === String(id) ? updatedTask : currentTask,
+        ),
+      );
+      return updatedTask;
+    } catch (error) {
+      throw new Error("Не вдалося оновити завдання.", { cause: error });
     }
-    setTasks((prev) =>
-      prev.map((t) => (String(t.id) === String(id) ? { ...t, ...task } : t)),
-    );
   };
 
   const deleteTask = async (id: number | string) => {
-    if (!Number.isNaN(Number(id))) {
-      await taskRepository.delete(id);
+    try {
+      const deletedTask = tasks.find(
+        (currentTask) => String(currentTask.id) === String(id),
+      );
+      if (!deletedTask) {
+        throw new Error("Task not found");
+      }
+
+      if (!Number.isNaN(Number(id))) {
+        await taskRepository.delete(id);
+      }
+      setTasks((prev) =>
+        prev.filter((currentTask) => String(currentTask.id) !== String(id)),
+      );
+      setTotal((prev) => prev - 1);
+      return deletedTask;
+    } catch (error) {
+      throw new Error("Не вдалося видалити завдання.", { cause: error });
     }
-    setTasks((prev) => prev.filter((t) => String(t.id) !== String(id)));
-    setTotal((prev) => prev - 1);
   };
   return {
     tasks,
