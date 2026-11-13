@@ -6,6 +6,7 @@ interface TaskListProps {
   currentFilter: TaskFilter;
   onToggle: (task: ITask) => void;
   onEdit: (task: ITask) => void;
+  onView: (task: ITask) => void;
   onDelete: (task: ITask) => void;
 }
 
@@ -14,6 +15,7 @@ export const TaskList = ({
   currentFilter,
   onToggle,
   onEdit,
+  onView,
   onDelete,
 }: TaskListProps) => {
   let filteredTasks;
@@ -53,6 +55,7 @@ export const TaskList = ({
           task={task}
           onToggle={onToggle}
           onEdit={onEdit}
+          onView={onView}
           onDelete={onDelete}
         />
       ))}

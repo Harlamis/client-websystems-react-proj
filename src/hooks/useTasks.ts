@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ITask } from "../types/ITask";
 import { taskRepository } from "../repository/taskRepository";
 import axios from "axios";
+import { useLocalStorage } from "./useLocalStorage";
+
+type LocalTaskDetails = Pick<ITask, "description" | "priority" | "category">;
 
 export const useTasks = (limit: number) => {
   const [tasks, setTasks] = useState<ITask[]>([]);
@@ -10,17 +13,25 @@ export const useTasks = (limit: number) => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const [localTaskDetails, setLocalTaskDetails] = useLocalStorage<
+    Record<string, LocalTaskDetails>
+  >("task_details", {});
+  const localTaskDetailsRef = useRef(localTaskDetails);
 
   useEffect(() => {
     const abortController = new AbortController();
     const skip = (currentPage - 1) * limit;
     const loadTasks = async () => {
       try {
-        const { tasks, total } = await taskRepository.getAll(
+        const { tasks: apiTasks, total } = await taskRepository.getAll(
           limit,
           skip,
           abortController.signal,
         );
+        const tasks = apiTasks.map((task) => ({
+          ...task,
+          ...localTaskDetailsRef.current[task.id],
+        }));
         setTasks(tasks);
         setTotal(total);
       } catch (error) {
@@ -48,7 +59,23 @@ export const useTasks = (limit: number) => {
 
   const createTask = async (task: Omit<ITask, "id" | "completed">) => {
     try {
-      const createdTask = await taskRepository.create(task);
+      const apiTask = await taskRepository.create(task);
+      const createdTask: ITask = {
+        ...apiTask,
+        ...task,
+        id: apiTask.id,
+        completed: apiTask.completed,
+      };
+      const nextLocalTaskDetails = {
+        ...localTaskDetailsRef.current,
+        [createdTask.id]: {
+          description: task.description,
+          priority: task.priority,
+          category: task.category,
+        },
+      };
+      localTaskDetailsRef.current = nextLocalTaskDetails;
+      setLocalTaskDetails(nextLocalTaskDetails);
       setTasks((prev) => [createdTask, ...prev]);
       setTotal((prev) => prev + 1);
       return createdTask;
@@ -76,6 +103,16 @@ export const useTasks = (limit: number) => {
         completed: serverTask.completed,
       };
 
+      const nextLocalTaskDetails = {
+        ...localTaskDetailsRef.current,
+        [String(id)]: {
+          description: updatedTask.description,
+          priority: updatedTask.priority,
+          category: updatedTask.category,
+        },
+      };
+      localTaskDetailsRef.current = nextLocalTaskDetails;
+      setLocalTaskDetails(nextLocalTaskDetails);
       setTasks((prev) =>
         prev.map((currentTask) =>
           String(currentTask.id) === String(id) ? updatedTask : currentTask,
@@ -99,6 +136,10 @@ export const useTasks = (limit: number) => {
       if (!Number.isNaN(Number(id))) {
         await taskRepository.delete(id);
       }
+      const nextLocalTaskDetails = { ...localTaskDetailsRef.current };
+      delete nextLocalTaskDetails[String(id)];
+      localTaskDetailsRef.current = nextLocalTaskDetails;
+      setLocalTaskDetails(nextLocalTaskDetails);
       setTasks((prev) =>
         prev.filter((currentTask) => String(currentTask.id) !== String(id)),
       );

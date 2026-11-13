@@ -23,10 +23,17 @@ interface TaskItemProps {
   task: ITask;
   onToggle: (task: ITask) => void;
   onEdit: (task: ITask) => void;
+  onView: (task: ITask) => void;
   onDelete: (task: ITask) => void;
 }
 
-export const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
+export const TaskItem = ({
+  task,
+  onToggle,
+  onEdit,
+  onView,
+  onDelete,
+}: TaskItemProps) => {
   return (
     <li
       className={`rounded-2xl border p-4 shadow-sm transition sm:p-5 ${
@@ -79,6 +86,14 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) =>
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+          <button
+            aria-label={`Переглянути «${task.title}»`}
+            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            onClick={() => onView(task)}
+            type="button"
+          >
+            Деталі
+          </button>
           <button
             aria-label={`Редагувати «${task.title}»`}
             className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
