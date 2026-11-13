@@ -1,4 +1,3 @@
-import { useTaskContext } from "../hooks/useTaskContext";
 import type { ITask } from "../types/ITask";
 
 const priorityLabels = {
@@ -20,8 +19,14 @@ const priorityClassNames = {
   high: "bg-rose-50 text-rose-700",
 } as const;
 
-export const TaskItem = ({ task }: { task: ITask }) => {
-  const { toggleTask, requestDelete, setEditingTask } = useTaskContext();
+interface TaskItemProps {
+  task: ITask;
+  onToggle: (task: ITask) => void;
+  onEdit: (task: ITask) => void;
+  onDelete: (task: ITask) => void;
+}
+
+export const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
   return (
     <li
       className={`rounded-2xl border p-4 shadow-sm transition sm:p-5 ${
@@ -43,7 +48,7 @@ export const TaskItem = ({ task }: { task: ITask }) => {
           }
           checked={task.completed}
           className="mt-1 size-5 shrink-0 accent-indigo-600"
-          onChange={() => toggleTask(task.id)}
+          onChange={() => onToggle(task)}
           type="checkbox"
         />
         <div className="min-w-0 flex-1">
@@ -77,7 +82,7 @@ export const TaskItem = ({ task }: { task: ITask }) => {
           <button
             aria-label={`Редагувати «${task.title}»`}
             className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            onClick={() => setEditingTask(task)}
+            onClick={() => onEdit(task)}
             type="button"
           >
             Редагувати
@@ -85,7 +90,7 @@ export const TaskItem = ({ task }: { task: ITask }) => {
           <button
             aria-label={`Видалити «${task.title}»`}
             className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600"
-            onClick={() => requestDelete(task.id)}
+            onClick={() => onDelete(task)}
             type="button"
           >
             Видалити
