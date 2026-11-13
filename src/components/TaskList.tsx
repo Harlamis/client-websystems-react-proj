@@ -1,8 +1,21 @@
-import { useTaskContext } from "../hooks/useTaskContext";
 import { TaskItem } from "./TaskItem";
+import type { ITask, TaskFilter } from "../types/ITask";
 
-export const TaskList = () => {
-  const { tasks, currentFilter } = useTaskContext();
+interface TaskListProps {
+  tasks: ITask[];
+  currentFilter: TaskFilter;
+  onToggle: (task: ITask) => void;
+  onEdit: (task: ITask) => void;
+  onDelete: (task: ITask) => void;
+}
+
+export const TaskList = ({
+  tasks,
+  currentFilter,
+  onToggle,
+  onEdit,
+  onDelete,
+}: TaskListProps) => {
   let filteredTasks;
   switch (currentFilter) {
     case "active":
@@ -35,7 +48,13 @@ export const TaskList = () => {
   return (
     <ul className="space-y-3">
       {filteredTasks.map((task) => (
-        <TaskItem key={task.id} task={task} />
+        <TaskItem
+          key={task.id}
+          task={task}
+          onToggle={onToggle}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </ul>
   );
